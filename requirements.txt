@@ -1,0 +1,5 @@
+flask
+transformers
+pyttsx3
+duckduckgo-search
+torch

@@ -1,0 +1,14 @@
+2025-07-01 23:01:20,061 - datos_completo.txt: 206 líneas -> 204 líneas útiles
+2025-07-01 23:01:20,061 - memoria_larga.txt: 9 líneas -> 4 líneas útiles
+2025-07-01 23:01:20,062 - aprendizaje_incremental.txt: 0 líneas -> 0 líneas útiles
+2025-07-01 23:01:20,068 - Respuestas basura eliminadas de la base de datos
+2025-07-01 23:01:20,120 - Imported existing <module 'comtypes.gen' from 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-07-01 23:01:20,120 - Using writeable comtypes cache directory: 'C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\site-packages\comtypes\gen'
+2025-07-01 23:01:23,801 - Voz seleccionada: Microsoft Sabina Desktop - Spanish (Mexico)
+2025-07-01 23:01:25,133 - Xet Storage is enabled for this repo, but the 'hf_xet' package is not installed. Falling back to regular HTTP download. For better performance, install the package with: `pip install huggingface_hub[hf_xet]` or `pip install hf_xet`
+2025-07-01 23:07:24,460 - \u2705 Modelo reentrenado y guardado exitosamente.
+2025-07-02 00:42:54,242 - Imported existing <module 'comtypes.gen' from 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-07-02 00:42:54,243 - Using writeable comtypes cache directory: 'C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\site-packages\comtypes\gen'
+2025-07-02 00:43:59,316 - response: https://lite.duckduckgo.com/lite/ 200
+2025-07-02 00:57:42,818 - Imported existing <module 'comtypes.gen' from 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-07-02 00:57:42,818 - Using writeable comtypes cache directory: 'C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\site-packages\comtypes\gen'
