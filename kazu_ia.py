@@ -3,7 +3,6 @@ from duckduckgo_search import DDGS
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 import menu_kazu
 
-
 # Configuración
 MODELO_BASE = "./modelo_kazu_v2"
 SERPAPI_KEY = "tu_clave_aquí"
@@ -15,8 +14,7 @@ tokenizer = AutoTokenizer.from_pretrained(MODELO_BASE)
 modelo = AutoModelForCausalLM.from_pretrained(MODELO_BASE)
 modelo_ia = pipeline("text-generation", model=modelo, tokenizer=tokenizer, device=0)
 
-
-# Voz (selección femenina en español segura)
+# Voz
 voz = pyttsx3.init()
 voz.setProperty("rate", 170)
 voz.setProperty("volume", 1)
@@ -33,7 +31,6 @@ def seleccionar_voz_femenina_esp(engine):
                     idioma = idioma.decode('utf-8')
         except:
             idioma = ""
-
         if ("es" in idioma or "spanish" in idioma or "español" in nombre) and any(n in nombre for n in ["mark"]):
             engine.setProperty("voice", v.id)
             print(f"[Kazu_ia] Voz seleccionada: {v.name}")
@@ -50,7 +47,6 @@ cursor.execute("CREATE TABLE IF NOT EXISTS lista_compras (id INTEGER PRIMARY KEY
 cursor.execute("CREATE TABLE IF NOT EXISTS aprendizaje (pregunta TEXT PRIMARY KEY, respuesta TEXT)")
 conexion.commit()
 
-# Respuestas predefinidas (estilo casual)
 respuestas_predefinidas = {
     "saludos": ["¡Hola, mi pana! ¿Cómo estás? ¿Pilas?", "¡Buenas! ¿Qué tal todo, mi pana?"],
     "como_estas": ["Estoy pilas, gracias por preguntar. ¡Y tú qué cuentas!", "Todo chévere por aquí, ¿y tú?"],
@@ -79,56 +75,6 @@ def agregar_a_dataset(pregunta, respuesta):
         if nueva_entrada not in contenido:
             with open(DATASET_TXT, "a", encoding="utf-8") as f2:
                 f2.write(nueva_entrada)
-
-def obtener_hora():
-    hablar(datetime.datetime.now().strftime("Son las %H:%M"))
-
-def obtener_hora_japon():
-    ahora = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
-    hablar(f"En Japón son las {ahora.strftime('%H:%M')}")
-
-def contar_chiste():
-    hablar(random.choice(respuestas_predefinidas["bromas"]))
-
-def abrir_youtube():
-    webbrowser.open("https://youtube.com")
-    hablar("Abriendo YouTube...")
-
-def anotar(texto):
-    nota = texto.replace("anota esto", "").strip()
-    if nota:
-        cursor.execute("INSERT INTO notas (texto) VALUES (?)", (nota,))
-        conexion.commit()
-        hablar("He anotado eso, mi pana.")
-    else:
-        hablar("¿Qué quieres que anote?")
-
-def mostrar_notas():
-    notas = cursor.execute("SELECT texto FROM notas").fetchall()
-    if notas:
-        hablar("Aquí tienes tus notas, pilas:")
-        for n in notas:
-            print("- " + n[0])
-    else:
-        hablar("No tienes notas guardadas.")
-
-def agregar_lista(texto):
-    prod = texto.replace("agrega a la lista", "").strip()
-    if prod:
-        cursor.execute("INSERT INTO lista_compras (producto) VALUES (?)", (prod,))
-        conexion.commit()
-        hablar(f"{prod} añadido a la lista, ¡una locura!")
-    else:
-        hablar("¿Qué quieres agregar?")
-
-def mostrar_lista():
-    productos = cursor.execute("SELECT producto FROM lista_compras").fetchall()
-    if productos:
-        hablar("Tu lista de compras, pilas:")
-        for p in productos:
-            print("- " + p[0])
-    else:
-        hablar("Tu lista está vacía.")
 
 def buscar_en_memoria(pregunta):
     row = cursor.execute("SELECT respuesta FROM aprendizaje WHERE pregunta=?", (pregunta,)).fetchone()
@@ -165,34 +111,15 @@ def respuesta_invalida(texto):
     if not texto:
         return True
     texto = texto.lower()
-    palabras_prohibidas = [
+    prohibidas = [
         "translate", "definition", "pronunciation", "meaning", "see", "example sentences",
         "in english", "diccionario", "spanishdict", "wordreference", "authoritative translations",
         "audio pronunciations", "learn", "see translations", "english version"
     ]
-    return any(p in texto for p in palabras_prohibidas)
+    return any(p in texto for p in prohibidas)
 
 def generar_respuesta_ia(pregunta):
     pregunta_limpia = pregunta.strip()
-
-    if "quién eres" in pregunta_limpia.lower() or "quien eres" in pregunta_limpia.lower():
-        return random.choice(respuestas_predefinidas["quien_eres"])
-
-    if "dime un poema de amor" in pregunta_limpia.lower():
-        return (
-            "Claro, mi pana, aquí te va un poema de amor corto:\n\n"
-            "El amor es un fuego que arde sin verse,\n"
-            "es herida que duele y no se siente,\n"
-            "es un contento descontente,\n"
-            "es un dolor que desatina sin dolerse."
-        )
-
-    if "qué sabes sobre computación" in pregunta_limpia.lower() or "que sabes sobre computación" in pregunta_limpia.lower():
-        return (
-            "Computación es la ciencia y tecnología que estudia el procesamiento automático de la información "
-            "usando computadoras y sistemas. Incluye programación, hardware, redes y más, mi pana."
-        )
-
     prompt = f"""Eres Kazu_ia, un asistente amigable y casual con estilo ecuatoriano. Responde en español, de forma completa y natural, usando lenguaje cercano y coloquial.
 
 Usuario: {pregunta_limpia}
@@ -201,10 +128,7 @@ Kazu_ia:"""
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
     inputs = {k: v.to(modelo.device) for k, v in inputs.items()}
 
-    max_intentos = 3
-    intentos = 0
-    respuesta = ""
-    while intentos < max_intentos:
+    for _ in range(3):
         salida = modelo.generate(
             **inputs,
             max_new_tokens=150,
@@ -217,74 +141,72 @@ Kazu_ia:"""
         respuesta = tokenizer.decode(salida[0], skip_special_tokens=True).strip()
         if respuesta.startswith(prompt):
             respuesta = respuesta[len(prompt):].strip()
-        if (len(respuesta) >= 50 and
-            not respuesta.lower().startswith(pregunta_limpia.lower()) and
-            not respuesta_invalida(respuesta)):
-            break
-        intentos += 1
+        if len(respuesta) >= 50 and not respuesta_invalida(respuesta):
+            return respuesta
 
-    if respuesta_invalida(respuesta):
-        respuesta = "Perdona, mi pana, no entendí bien tu pregunta. ¿Puedes reformularla?"
+    return "Perdona, mi pana, no entendí bien tu pregunta. ¿Puedes reformularla?"
 
-    return respuesta
-
-def responder_con_ia(texto):
-    texto = texto.lower().strip()
-
-    if texto in ["hola", "buenas", "qué tal"]:
-        hablar(random.choice(respuestas_predefinidas["saludos"]))
-        return
-    if texto in ["cómo estás", "como estas"]:
-        hablar(random.choice(respuestas_predefinidas["como_estas"]))
-        return
-    if texto in ["bien y tú", "bien y tu"]:
-        hablar(random.choice(respuestas_predefinidas["bien_y_tu"]))
-        return
-    if texto in ["quién eres", "quien eres"]:
-        hablar(random.choice(respuestas_predefinidas["quien_eres"]))
-        return
-
-    guardada = buscar_en_memoria(texto)
-    if guardada:
-        hablar(guardada)
-        return
-
-    resultado_web = buscar_serpapi(texto) or buscar_ddg(texto)
-    if resultado_web:
-        hablar(resultado_web)
-        guardar_en_memoria(texto, resultado_web)
-        return
-
-    respuesta = generar_respuesta_ia(texto)
-    hablar(respuesta)
-    guardar_en_memoria(texto, respuesta)
-
-def procesar_comando(e):
+def procesar_comando(e, solo_texto=False):
     e = e.lower().strip()
-    if "hora en japón" in e or "hora en japon" in e:
-        obtener_hora_japon()
-    elif "abre youtube" in e:
-        abrir_youtube()
+    if e in ["hola", "buenas", "qué tal"]:
+        respuesta = random.choice(respuestas_predefinidas["saludos"])
+    elif e in ["cómo estás", "como estas"]:
+        respuesta = random.choice(respuestas_predefinidas["como_estas"])
+    elif e in ["bien y tú", "bien y tu"]:
+        respuesta = random.choice(respuestas_predefinidas["bien_y_tu"])
+    elif e in ["quién eres", "quien eres"]:
+        respuesta = random.choice(respuestas_predefinidas["quien_eres"])
+    elif "hora en japón" in e or "hora en japon" in e:
+        ahora = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+        respuesta = f"En Japón son las {ahora.strftime('%H:%M')}"
     elif "hora" in e:
-        obtener_hora()
+        respuesta = datetime.datetime.now().strftime("Son las %H:%M")
     elif "chiste" in e:
-        contar_chiste()
+        respuesta = random.choice(respuestas_predefinidas["bromas"])
     elif "anota esto" in e:
-        anotar(e)
+        nota = e.replace("anota esto", "").strip()
+        if nota:
+            cursor.execute("INSERT INTO notas (texto) VALUES (?)", (nota,))
+            conexion.commit()
+            respuesta = "He anotado eso, mi pana."
+        else:
+            respuesta = "¿Qué quieres que anote?"
     elif "muestra notas" in e:
-        mostrar_notas()
+        notas = cursor.execute("SELECT texto FROM notas").fetchall()
+        respuesta = "Tus notas:\n" + "\n".join("- " + n[0] for n in notas) if notas else "No tienes notas guardadas."
     elif "agrega a la lista" in e:
-        agregar_lista(e)
+        prod = e.replace("agrega a la lista", "").strip()
+        if prod:
+            cursor.execute("INSERT INTO lista_compras (producto) VALUES (?)", (prod,))
+            conexion.commit()
+            respuesta = f"{prod} añadido a la lista."
+        else:
+            respuesta = "¿Qué quieres agregar?"
     elif "muestra lista" in e:
-        mostrar_lista()
-    elif e == "panel admin" or e == "abrir panel":
-        menu_kazu.menu()    # <-- Aquí corregí indentación (debe estar indentado)
+        productos = cursor.execute("SELECT producto FROM lista_compras").fetchall()
+        respuesta = "Tu lista de compras:\n" + "\n".join("- " + p[0] for p in productos) if productos else "Tu lista está vacía."
+    elif e in ["panel admin", "abrir panel"]:
+        respuesta = "El panel no está disponible desde la web."
     else:
-        responder_con_ia(e)
-    return True
+        guardada = buscar_en_memoria(e)
+        if guardada:
+            respuesta = guardada
+        else:
+            resultado_web = buscar_serpapi(e) or buscar_ddg(e)
+            if resultado_web:
+                respuesta = resultado_web
+            else:
+                respuesta = generar_respuesta_ia(e)
+            guardar_en_memoria(e, respuesta)
+
+    if solo_texto:
+        return respuesta
+    else:
+        hablar(respuesta)
+        return True
 
 def iniciar_kazu():
-    hablar("Hola, soy asistente personal. ¿En qué puedo ayudarte hoy, mi pana?")
+    hablar("Hola, soy tu asistente personal. ¿En qué puedo ayudarte hoy, mi pana?")
     while True:
         entrada = input("Tú: ")
         if entrada.lower() == "salir":
@@ -294,3 +216,4 @@ def iniciar_kazu():
 
 if __name__ == "__main__":
     iniciar_kazu()
+
