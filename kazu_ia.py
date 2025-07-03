@@ -5,7 +5,7 @@ import menu_kazu
 
 # Configuración
 MODELO_BASE = "./modelo_kazu_v2"
-SERPAPI_KEY = "tu_clave_aquí"
+SERPAPI_KEY = "35da2325f00338592839e0e2c0cf3bf18ba184008f6bbca23d1ae196a79ccb65"
 MEMORIA_LARGA = "memoria_larga.txt"
 DATASET_TXT = "datos_completo.txt"
 
