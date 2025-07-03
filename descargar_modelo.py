@@ -1,42 +1,42 @@
-import requests
-import os
-from tqdm import tqdm
+import requests, os, zipfile
 
 def descargar_drive(id_archivo, nombre_destino):
+    print(f"[Descarga] Descargando archivo desde Google Drive...")
     URL = "https://docs.google.com/uc?export=download"
     sesion = requests.Session()
 
-    print(f"📥 Iniciando descarga del archivo ID: {id_archivo}")
-
     respuesta = sesion.get(URL, params={'id': id_archivo}, stream=True)
-    token = _obtener_token_confirmacion(respuesta)
 
+    def obtener_token_confirmacion(resp):
+        for key, value in resp.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+    token = obtener_token_confirmacion(respuesta)
     if token:
-        params = {'id': id_archivo, 'confirm': token}
-        respuesta = sesion.get(URL, params=params, stream=True)
-
-    _guardar_archivo(respuesta, nombre_destino)
-    print(f"✅ Archivo descargado correctamente como: {nombre_destino}")
-
-def _obtener_token_confirmacion(respuesta):
-    for key, value in respuesta.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
-
-def _guardar_archivo(respuesta, nombre_destino):
-    total = int(respuesta.headers.get('content-length', 0))
-    progreso = tqdm(total=total, unit='B', unit_scale=True, desc=nombre_destino)
+        respuesta = sesion.get(URL, params={'id': id_archivo, 'confirm': token}, stream=True)
 
     with open(nombre_destino, "wb") as f:
         for chunk in respuesta.iter_content(32768):
             if chunk:
                 f.write(chunk)
-                progreso.update(len(chunk))
-    progreso.close()
+
+    print(f"[Descarga] Archivo descargado como: {nombre_destino}")
+
+def descomprimir(zip_path, destino="./"):
+    print(f"[Descompresión] Extrayendo {zip_path} en {destino}...")
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(destino)
+    print("[Descompresión] Hecho.")
 
 # === DATOS DEL ARCHIVO A DESCARGAR ===
-if __name__ == "__main__":
-    ID = "1XlBVuDtDL8pnziFHxrbqQ06E-uALvKk-"
-    NOMBRE_SALIDA = "modelo_entrenado_kazu.zip"
-    descargar_drive(ID, NOMBRE_SALIDA)
+ID = "1FrZEz6_QPFcVxxNbHkR9UAUjNglYxFBF"
+NOMBRE_ZIP = "modelo_kazu_v2.zip"
+
+if not os.path.exists("modelo_kazu_v2"):
+    descargar_drive(ID, NOMBRE_ZIP)
+    descomprimir(NOMBRE_ZIP)
+    os.remove(NOMBRE_ZIP)
+else:
+    print("[✔️] El modelo ya está descargado.")
