@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: kazu-ia-web
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web_server.py
+    envVars:
+      - key: SERPAPI_KEY
+        value: 35da2325f00338592839e0e2c0cf3bf18ba184008f6bbca23d1ae196a79ccb65  # Cambia esto por tu clave real o usa un .env
+    autoDeploy: true
+    runtime: python
+    region: oregon
